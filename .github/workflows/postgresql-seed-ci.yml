@@ -82,3 +82,4 @@ jobs:
             body: issueBody,
             labels: ['CI', 'database', 'bug']
           })
+
