@@ -1,0 +1,67 @@
+name: Main Branch CI
+
+# This is what triggers the action
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    types: [opened, synchronize]
+    branches: ['main']
+
+jobs:
+  build-and-test-migrations-and-seeds:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+        # these could be moved to secrets, but they're dummy values
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: username
+          POSTGRES_DB: dbname
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+      # this is Render's default version of python
+      # https://render.com/docs/python-version#:~:text=Python%20version%203.11.,Python%20version%20(e.g.%2C%203.9.
+        python-version: '3.11'
+
+    # Cache Python dependencies
+    # https://github.com/actions/cache/blob/main/caching-strategies.md
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+  #comment new
+    # Install dependencies
+    - name: Install dependencies
+      run: |
+        pip install --no-cache-dir -r requirements.txt
+        pip install --no-cache-dir psycopg2
+
+
+    - name: Run migrations and seed database
+      env:
+      # these could be moved to secrets, but they're dummy values anyway
+        FLASK_APP: app
+        SCHEMA: mydb
+        FLASK_ENV: production
+        DATABASE_URL: postgresql://username:password@localhost:5432/dbname
+      run: |
+        flask db upgrade
+        flask seed all
