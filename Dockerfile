@@ -9,23 +9,23 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd && \
     rm -rf /var/lib/apt/lists/*
 
-# WORKDIR /var/www
+WORKDIR /var/www
 
 
-# # Final stage
-# FROM python:3.11-slim
-# ENV PYTHONUNBUFFERED=1
+# Final stage
+FROM python:3.11-slim
+ENV PYTHONUNBUFFERED=1
 
-# # Install runtime dependencies
-# RUN apt-get update && apt-get install -y \
-#     netcat-openbsd && \
-#     rm -rf /var/lib/apt/lists/*
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www
 
 
 # Copy the Python environment from the builder stage
-# COPY --from=builder /usr/local /usr/local
+COPY --from=builder /usr/local /usr/local
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt psycopg2-binary Faker
 
